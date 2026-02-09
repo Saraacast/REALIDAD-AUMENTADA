@@ -13,20 +13,33 @@
     <script>
         AFRAME.registerComponent('toggle-color', {
             init: function () {
-                this.el.addEventListener('model-loaded', () => {
-                    const mesh = this.el.getObject3D('mesh');
-                    this.originalMaterials = new Map();
+                console.log('Component toggle-color initialized');
 
-                    mesh.traverse((node) => {
-                        if (node.isMesh) {
-                            this.originalMaterials.set(node, node.material.clone());
-                        }
-                    });
-                });
+                const handleModelLoaded = () => {
+                    console.log('Model loaded - preparing materials');
+                    const mesh = this.el.getObject3D('mesh');
+                    if (mesh) {
+                        this.originalMaterials = new Map();
+                        mesh.traverse((node) => {
+                            if (node.isMesh) {
+                                this.originalMaterials.set(node, node.material.clone());
+                            }
+                        });
+                        console.log('Materials saved');
+                    }
+                };
+
+                // Check if model is already loaded
+                if (this.el.getObject3D('mesh')) {
+                    handleModelLoaded();
+                } else {
+                    this.el.addEventListener('model-loaded', handleModelLoaded);
+                }
 
                 this.isGray = false;
 
-                this.el.addEventListener('click', () => {
+                this.el.addEventListener('click', (evt) => {
+                    console.log('Click detected', evt);
                     const mesh = this.el.getObject3D('mesh');
                     if (!mesh) return;
 
@@ -35,11 +48,13 @@
                     mesh.traverse((node) => {
                         if (node.isMesh) {
                             if (this.isGray) {
-                                // Create a simple gray material
-                                node.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+                                node.material = new THREE.MeshStandardMaterial({
+                                    color: 0x808080,
+                                    metalness: 0.5,
+                                    roughness: 0.5
+                                });
                             } else {
-                                // Restore original
-                                if (this.originalMaterials.has(node)) {
+                                if (this.originalMaterials && this.originalMaterials.has(node)) {
                                     node.material = this.originalMaterials.get(node);
                                 }
                             }
