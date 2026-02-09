@@ -10,7 +10,46 @@
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs>
+    <script>
+        AFRAME.registerComponent('toggle-color', {
+            init: function () {
+                this.el.addEventListener('model-loaded', () => {
+                    const mesh = this.el.getObject3D('mesh');
+                    this.originalMaterials = new Map();
+
+                    mesh.traverse((node) => {
+                        if (node.isMesh) {
+                            this.originalMaterials.set(node, node.material.clone());
+                        }
+                    });
+                });
+
+                this.isGray = false;
+
+                this.el.addEventListener('click', () => {
+                    const mesh = this.el.getObject3D('mesh');
+                    if (!mesh) return;
+
+                    this.isGray = !this.isGray;
+
+                    mesh.traverse((node) => {
+                        if (node.isMesh) {
+                            if (this.isGray) {
+                                // Create a simple gray material
+                                node.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+                            } else {
+                                // Restore original
+                                if (this.originalMaterials.has(node)) {
+                                    node.material = this.originalMaterials.get(node);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+    <a-scene embedded arjs cursor="rayOrigin: mouse" raycaster="objects: .clickable">
 
         <a-assets>
             <!-- Carga del modelo 3D (GLTF) -->
@@ -22,7 +61,8 @@
 
             <!-- Modelo 3D: Escala 2, Rotación suave -->
             <a-entity gltf-model="#jerboa-model" scale="2 2 2" position="0 0 0"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear" class="clickable"
+                toggle-color>
             </a-entity>
 
             <!-- Texto "Chinchilla" al lado -->
